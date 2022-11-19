@@ -1,0 +1,26 @@
+
+# plink files
+# bed: prefix/path/to/plink.bed
+bed: prefix/path/to/plink/bfile
+# bim: prefix/path/to/plink.bim
+bim: prefix/path/to/plink/bfile
+# fam: prefix/path/to/plink.fam
+fam: prefix/path/to/plink/bfile
+
+phasing:
+  input: "vcf"
+  shapeit2: "--duohmm -W 5"
+  panel1: "config/refpanel1.tsv"
+  panel2: "config/refpanel2.tsv"
+
+imputation:
+  shapeit2: "--duohmm -W 5"
+  impute2: "-Ne 20000"
+  chunksize: 5000000
+
+# programs path
+impute2: "impute2"
+shapeit2: "shapeit2"
+plink: "plink"    # plink1.9
+bcftools: "bcftools"
+dosage: "dosage"  # https://github.com/Zilong-Li/vcfpp/blob/main/tools/dosage.cpp
