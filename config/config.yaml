@@ -1,17 +1,17 @@
 
 # plink files
 # bed: prefix/path/to/plink.bed
-bed: prefix/path/to/plink/bfile
+bed: data/chip/megaMergedPlus.autosomes.QCedHg38.nonoverlap.bed
 # bim: prefix/path/to/plink.bim
-bim: prefix/path/to/plink/bfile
+bim: data/chip/megaMergedPlus.autosomes.QCedHg38.nonoverlap.bim
 # fam: prefix/path/to/plink.fam
-fam: prefix/path/to/plink/bfile
+fam: data/chip/megaMergedPlus.autosomes.QCedHg38.nonoverlap.fam
 
 phasing:
   input: "vcf"
   shapeit2: "--duohmm -W 5"
-  panel1: "config/refpanel1.tsv"
-  panel2: "config/refpanel2.tsv"
+  refpanel1: "config/refpanel1.tsv"
+  refpanel2: "config/refpanel2.tsv"
 
 imputation:
   shapeit2: "--duohmm -W 5"

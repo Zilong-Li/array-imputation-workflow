@@ -2,20 +2,36 @@ import os
 import pandas as pd
 from collections import defaultdict
 
-# dict : {"chr1": {"start":1, "end": 99999}, ...}
+# dict : {"chr1": {"vcf": path, "phased": "no", "trios":"path","geneticmap":"path"}, ...}
 REFPANEL = (
     pd.read_csv(config["phasing"]["refpanel1"], sep="\t", dtype=str)
     .set_index("chr")
     .to_dict(orient="index")
 )
 
+if os.path.exists(config["phasing"]["refpanel2"]):
+    REFPANEL2 = (
+        pd.read_csv(config["phasing"]["refpanel2"], sep="\t", dtype=str)
+        .set_index("chr")
+        .to_dict(orient="index")
+    )
+
 
 CHUNKSIZE = config["imputation"]["chunksize"]
-DATANAME = os.path.basename(config["bed"])[:-4]
+
+# programs
+BCFTOOLS = config['bcftools']
+PLINK = config['plink']
+SHAPEIT2 = config['shapeit2']
+IMPUTE2 = config['impute2']
 
 
 wildcard_constraints:
     chrom="|".join(REFPANEL.keys()),
+
+
+def get_all_results():
+    return expand(rules.run_prephasing.output, chrom=REFPANEL.keys())
 
 
 def get_regions_list_per_chrom(wildcards):

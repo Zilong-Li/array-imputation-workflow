@@ -1,2 +1,2 @@
-chr vcf phased  trios   geneticmap
-chr21   /emc/greenland/ffs/ReferencePanels/output/wgs_15xGL_T98_PASSonly_geno03_menDisc05_nozerocall_vcf.vcf.gz no   /path/to/fam /path/to/genetic/map
+chr	vcf	phased	trios	geneticmap
+chr21	data/WGS/wgs_15xGL_T98_PASSonly_geno03_menDisc05_nozerocall.chr21.vcf.gz	no	/emc/greenland/ffs/ReferencePanels/output/wgs_15xGL_T98_PASSonly_geno03_menDisc05_nozerocall.fam	data/geneticmaps/genetic_map_hg38_chr21.txt

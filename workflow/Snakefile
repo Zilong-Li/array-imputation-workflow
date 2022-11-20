@@ -3,5 +3,29 @@
 # https://snakemake.readthedocs.io/en/stable/snakefiles/best_practices.html,
 # in particular regarding the standardized folder structure mentioned there. 
 
-import os
-import sys
+
+from snakemake.utils import min_version
+
+##### set minimum snakemake version #####
+min_version("6.4.1")
+
+
+configfile: "config/config.yaml"
+
+
+#### report ######
+
+
+# report: "report/workflow.rst"
+
+
+#### load rules ########
+
+
+include: "rules/common.smk"
+include: "rules/phasing.smk"
+include: "rules/imputation.smk"
+
+rule all:
+    input:
+        get_all_results(),
