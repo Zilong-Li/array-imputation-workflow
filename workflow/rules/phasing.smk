@@ -29,7 +29,7 @@ rule phasing_ref1:
             {PLINK} --{params.intype} {params.vcf} --a1-allele {params.a1} 4 3 \# --make-bed --out {params.bfile} --allow-extra-chr --output-chr chr26 && \
             if [ -s {params.fam} ];then cp {params.fam} {params.bfile}.fam;fi && \
             {SHAPEIT2} {params.shapeit2} -B {params.bfile} -M {params.maps} -O {params.out} --thread {threads} && \
-            {SHAPEIT2} -convert --input-haps {params.out}.haps --output-vcf  {output.vcf} && {BCFTOOLS} index -f {output.vcf} \
+            {SHAPEIT2} -convert --input-haps {params.out}.haps --output-vcf  {output.vcf} && zcat {output.vcf} | bgzip -c > {output.vcf}.gz && mv {output.vcf}.gz {output.vcf} && {BCFTOOLS} index -f {output.vcf} \
         ; fi
         ) &> {log}
         """
@@ -78,7 +78,7 @@ rule phasing_ref2:
             {PLINK} --{params.intype} {params.vcf} --a1-allele {params.a1} 4 3 \# --make-bed --out {params.bfile} --allow-extra-chr --output-chr chr26 && \
             if [ -s {params.fam} ];then cp {params.fam} {params.bfile}.fam;fi && \
             {SHAPEIT2} {params.shapeit2} -B {params.bfile} -M {params.maps} -O {params.out} --thread {threads} && \
-            {SHAPEIT2} -convert --input-haps {params.out} --output-vcf  {output.vcf} && {BCFTOOLS} index -f {output.vcf} \
+            {SHAPEIT2} -convert --input-haps {params.out}.haps --output-vcf  {output.vcf} && zcat {output.vcf} | bgzip -c > {output.vcf}.gz && mv {output.vcf}.gz {output.vcf} && {BCFTOOLS} index -f {output.vcf} \
         ; fi
         """
 
