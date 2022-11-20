@@ -10,11 +10,11 @@ fam: data/chip/megaMergedPlus.autosomes.QCedHg38.nonoverlap.fam
 phasing:
   input: "vcf"
   shapeit2: "--duohmm -W 5"
-  refpanel1: "config/refpanel1.tsv"
-  refpanel2: "config/refpanel2.tsv"
+  refpanel1: "config/refpanel1.tsv" # mandatory
+  refpanel2: "config/refpanel2.tsv" # optional,
 
 imputation:
-  shapeit2: "--duohmm -W 5"
+  shapeit2: "--duohmm -W 5"  # for chip prephasing
   impute2: "-Ne 20000"
   chunksize: 5000000
 

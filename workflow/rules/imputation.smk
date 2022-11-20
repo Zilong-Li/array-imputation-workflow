@@ -154,8 +154,10 @@ rule run_impute2_byregion:
     threads: 1
     shell:
         """
+        (
         {IMPUTE2} {params.impute2} -phase -use_prephased_g -known_haps_g {input.haps} -merge_ref_panels -merge_ref_panels_output_ref {output.gen}_merged_ref -h {input.hap1} {input.hap2} -l {input.leg1} {input.leg2} -m {params.maps} -int {wildcards.start} {wildcards.end} -o {output.gen}
         grep "no SNPs in the imputation interval" {output.summary} && touch {output} || true
+        ) &> {log}
         """
 
 
@@ -163,24 +165,42 @@ rule ligate_impute2_chunks:
     input:
         unpack(get_impute2_output_chunks),
     output:
-        gen=protected(os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.gen.gz")),
-        info=protected(os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.info.gz")),
-        info2=protected(
-            os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.info_by_sample.gz")
-        ),
-        haps=protected(os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.haps.gz")),
-        probs=protected(
-            os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.allele_probs.gz")
-        ),
+        gen=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.gen.gz"),
+        haps=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.haps.gz"),
+        info=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.info.gz"),
+        info2=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.info_by_sample.gz"),
+        probs=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.allele_probs.gz"),
     log:
         os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.ligate.llog"),
     shell:
         """
         ( \
-        echo {input.gen} | tr ' ' '\n'  | xargs cat |gzip -c > {output.gen} && \
-        echo {input.info} | tr ' ' '\n'  | xargs cat |gzip -c > {output.info} && \
-        echo {input.info2} | tr ' ' '\n'  | xargs cat |gzip -c > {output.info2} && \
-        echo {input.haps} | tr ' ' '\n'  | xargs cat |gzip -c > {output.haps} && \
-        echo {input.probs} | tr ' ' '\n'  | xargs cat |gzip -c > {output.probs} \
+        echo {input.gen} | tr ' ' '\n'  | xargs cat | awk '$2={wildcards.chrom}":"$3"_"$4"_"$5' | gzip -c > {output.gen} && \
+        echo {input.info} | tr ' ' '\n'  | xargs cat | gzip -c > {output.info} && \
+        echo {input.info2} | tr ' ' '\n'  | xargs cat | gzip -c > {output.info2} && \
+        echo {input.haps} | tr ' ' '\n'  | xargs cat | gzip -c > {output.haps} && \
+        echo {input.probs} | tr ' ' '\n'  | xargs cat | gzip -c > {output.probs} \
+        ) &> {log}
+        """
+
+
+rule convert_formats:
+    input:
+        gen=rules.ligate_impute2_chunks.output.gen,
+        haps=rules.ligate_impute2_chunks.output.haps,
+        sample=rules.run_prephasing.output.sample,
+    output:
+        vcf1=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.unphased.vcf.gz"),
+        vcf2=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.phased.vcf.gz"),
+    log:
+        os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.convert_formats.llog"),
+    params:
+        samples=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.samples"),
+    shell:
+        """
+        (
+        awk 'NR>2 {{$1=$2; $4=0; $5=0}};1' {input.sample} > {params.samples} && \
+        {BCFTOOLS} convert -G {input.gen},{params.samples} --threads 4 -Oz -o {output.vcf1} && {BCFTOOLS} index -f {output.vcf1} && \
+        {SHAPEIT2} -convert --input-haps {input.haps} --output-vcf  {output.vcf2} && {BCFTOOLS} index -f {output.vcf2} \
         ) &> {log}
         """

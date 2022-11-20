@@ -5,11 +5,12 @@ rule phasing_ref1:
     output:
         haps=temp(os.path.join(PHASING, "refpanel1_{chrom}.haps")),
         sample=temp(os.path.join(PHASING, "refpanel1_{chrom}.sample")),
+        vcf=os.path.join(PHASING, "refpanel1_{chrom}.vcf.gz"),
     log:
         os.path.join(PHASING, "refpanel1_{chrom}.llog"),
     params:
         bfile=lambda wildcards: PHASING + "/refpanel1_" + wildcards.chrom,
-        vcf=lambda wildcards: REFPANEL[wildcards.chrom]["vcf"],
+        vcf=lambda wildcards: os.path.abspath(REFPANEL[wildcards.chrom]["vcf"]),
         a1=temp(lambda wildcards: REFPANEL[wildcards.chrom]["vcf"] + ".txt"),
         maps=lambda wildcards: REFPANEL[wildcards.chrom]["geneticmap"],
         phased=lambda wildcards: REFPANEL[wildcards.chrom]["phased"],
@@ -22,12 +23,13 @@ rule phasing_ref1:
         """
         (
         if [ {params.phased} == "yes" ];then \
-            bcftools convert --hapsample {output.haps},{output.sample} {params.vcf} \
+            ln -sf {params.vcf} {output.vcf} && {BCFTOOLS} index -f {output.vcf} && {BCFTOOLS} convert --hapsample {output.haps},{output.sample} {params.vcf} \
         ; else \
             {BCFTOOLS} query -f '%CHROM\\t%POS\\t%ID\\t%REF\\t%ALT\\n' {params.vcf} > {params.a1} && \
-            {PLINK} --{params.intype} {params.vcf} --a1-allele {params.a1} 4 3 \# --make-bed --out {params.bfile} && \
+            {PLINK} --{params.intype} {params.vcf} --a1-allele {params.a1} 4 3 \# --make-bed --out {params.bfile} --allow-extra-chr --output-chr chr26 && \
             if [ -s {params.fam} ];then cp {params.fam} {params.bfile}.fam;fi && \
-            {SHAPEIT2} {params.shapeit2} -B {params.bfile} -M {params.maps} -O {params.out} --thread {threads} \
+            {SHAPEIT2} {params.shapeit2} -B {params.bfile} -M {params.maps} -O {params.out} --thread {threads} && \
+            {SHAPEIT2} -convert --input-haps {params.out}.haps --output-vcf  {output.vcf} && {BCFTOOLS} index -f {output.vcf} \
         ; fi
         ) &> {log}
         """
@@ -55,9 +57,10 @@ rule phasing_ref2:
     output:
         haps=temp(os.path.join(PHASING, "refpanel2_{chrom}.haps")),
         sample=temp(os.path.join(PHASING, "refpanel2_{chrom}.sample")),
+        vcf=os.path.join(PHASING, "refpanel2_{chrom}.vcf.gz"),
     params:
         bfile=lambda wildcards: PHASING + "/refpanel2_" + wildcards.chrom,
-        vcf=lambda wildcards: REFPANEL2[wildcards.chrom]["vcf"],
+        vcf=lambda wildcards: os.path.abspath(REFPANEL[wildcards.chrom]["vcf"]),
         a1=temp(lambda wildcards: REFPANEL2[wildcards.chrom]["vcf"] + ".txt"),
         maps=lambda wildcards: REFPANEL2[wildcards.chrom]["geneticmap"],
         phased=lambda wildcards: REFPANEL2[wildcards.chrom]["phased"],
@@ -69,14 +72,16 @@ rule phasing_ref2:
     shell:
         """
         if [ {params.phased} == "yes" ];then \
-            bcftools convert --hapsample {output.haps},{output.sample} {params.vcf} \
+            ln -sf {params.vcf} {output.vcf} && {BCFTOOLS} index -f {output.vcf} && {BCFTOOLS} convert --hapsample {output.haps},{output.sample} {params.vcf} \
         ; else \
             {BCFTOOLS} query -f '%CHROM\\t%POS\\t%ID\\t%REF\\t%ALT\\n' {params.vcf} > {params.a1} && \
-            {PLINK} --{params.intype} {params.vcf} --a1-allele {params.a1} 4 3 \# --make-bed --out {params.bfile} && \
+            {PLINK} --{params.intype} {params.vcf} --a1-allele {params.a1} 4 3 \# --make-bed --out {params.bfile} --allow-extra-chr --output-chr chr26 && \
             if [ -s {params.fam} ];then cp {params.fam} {params.bfile}.fam;fi && \
-            {SHAPEIT2} {params.shapeit2} -B {params.bfile} -M {params.maps} -O {params.out} --thread {threads} \
+            {SHAPEIT2} {params.shapeit2} -B {params.bfile} -M {params.maps} -O {params.out} --thread {threads} && \
+            {SHAPEIT2} -convert --input-haps {params.out} --output-vcf  {output.vcf} && {BCFTOOLS} index -f {output.vcf} \
         ; fi
         """
+
 
 rule prepare_ref2:
     input:

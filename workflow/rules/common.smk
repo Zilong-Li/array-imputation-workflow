@@ -25,26 +25,24 @@ PLINK = config["plink"]
 SHAPEIT2 = config["shapeit2"]
 IMPUTE2 = config["impute2"]
 
+dpos = defaultdict(list)
+with open(config["bim"], "r") as f:
+    for line in f:
+        tmp = line.rstrip().split()
+        dpos[tmp[0]].append(int(tmp[3]))
+
 
 wildcard_constraints:
     chrom="|".join(REFPANEL.keys()),
 
 
 def get_all_results():
-    return expand(rules.ligate_impute2_chunks.output, chrom=["chr21"])
-
-
-# return expand(rules.run_prephasing.output, chrom=REFPANEL.keys())
+    return expand(rules.convert_formats.output, chrom=REFPANEL.keys())
 
 
 def get_regions_list_per_chrom(chrom):
     """split chr into chunks given chunksize; return starts, ends' pairs"""
-    d = defaultdict(list)
-    with open(config["bim"], "r") as f:
-        for line in f:
-            tmp = line.rstrip().split()
-            d[tmp[0]].append(int(tmp[3]))
-    pos = sorted(d.get(chrom))
+    pos = sorted(dpos.get(chrom))
     s, e = pos[0], pos[-1]
     n = int((e - s) / CHUNKSIZE) + 1
     if (n - 1) * CHUNKSIZE == e - s:
