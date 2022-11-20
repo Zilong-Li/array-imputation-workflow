@@ -1,5 +1,45 @@
-OUTIMPUTATION = "results/imputation"
+IMPUTATION = "results/imputation"
 DATANAME = os.path.basename(config["bed"])[:-4]
+
+
+def get_impute2_output_chunks(wildcards):
+    starts, ends = get_regions_list_per_chrom(wildcards.chrom)
+    gen = expand(
+        rules.run_impute2_byregion.output.gen,
+        zip,
+        start=starts,
+        end=ends,
+        allow_missing=True,
+    )
+    info = expand(
+        rules.run_impute2_byregion.output.info,
+        zip,
+        start=starts,
+        end=ends,
+        allow_missing=True,
+    )
+    info2 = expand(
+        rules.run_impute2_byregion.output.info2,
+        zip,
+        start=starts,
+        end=ends,
+        allow_missing=True,
+    )
+    haps = expand(
+        rules.run_impute2_byregion.output.haps,
+        zip,
+        start=starts,
+        end=ends,
+        allow_missing=True,
+    )
+    probs = expand(
+        rules.run_impute2_byregion.output.probs,
+        zip,
+        start=starts,
+        end=ends,
+        allow_missing=True,
+    )
+    return {"gen": gen, "info": info, "info2": info2, "haps": haps, "probs": probs}
 
 
 rule split_chrs:
@@ -8,11 +48,11 @@ rule split_chrs:
         bim=config["bim"],
         fam=config["fam"],
     output:
-        bed=os.path.join(OUTIMPUTATION, DATANAME + "_{chrom}.bed"),
-        bim=os.path.join(OUTIMPUTATION, DATANAME + "_{chrom}.bim"),
-        fam=os.path.join(OUTIMPUTATION, DATANAME + "_{chrom}.fam"),
+        bed=os.path.join(IMPUTATION, DATANAME + "_{chrom}.bed"),
+        bim=os.path.join(IMPUTATION, DATANAME + "_{chrom}.bim"),
+        fam=os.path.join(IMPUTATION, DATANAME + "_{chrom}.fam"),
     log:
-        os.path.join(OUTIMPUTATION, DATANAME + "_{chrom}.llog"),
+        os.path.join(IMPUTATION, DATANAME + "_{chrom}.llog"),
     params:
         bfile=lambda wildcards, input: input[0][:-4],
         out=lambda wildcards, output: output[0][:-4],
@@ -31,9 +71,9 @@ rule check_alignment:
         leg=rules.prepare_ref1.output.leg,
         sam=rules.prepare_ref1.output.sam,
     output:
-        os.path.join(OUTIMPUTATION, "checks", "{chrom}.snp.strand.exclude"),
+        os.path.join(IMPUTATION, "checks", "{chrom}.snp.strand.exclude"),
     log:
-        os.path.join(OUTIMPUTATION, "checks", "{chrom}.check_alignment.llog"),
+        os.path.join(IMPUTATION, "checks", "{chrom}.check_alignment.llog"),
     params:
         maps=lambda wildcards: REFPANEL[wildcards.chrom]["geneticmap"],
         bfile=lambda wildcards, input: input[0][:-4],
@@ -54,165 +94,93 @@ rule run_prephasing:
         sam=rules.prepare_ref1.output.sam,
         excl=rules.check_alignment.output,
     output:
-        haps=os.path.join(OUTIMPUTATION, "chr{chrom}.prephasing.haps"),
-        sample=os.path.join(OUTIMPUTATION, "chr{chrom}.prephasing.sample"),
+        haps=os.path.join(IMPUTATION, "prephasing", "{chrom}.prephasing.haps"),
+        sample=os.path.join(IMPUTATION, "prephasing", "{chrom}.prephasing.sample"),
     log:
-        os.path.join(OUTIMPUTATION, "chr{chrom}.prephasing.llog"),
+        os.path.join(IMPUTATION, "prephasing", "{chrom}.prephasing.llog"),
     params:
         maps=lambda wildcards: REFPANEL[wildcards.chrom]["geneticmap"],
         bfile=lambda wildcards, input: input[0][:-4],
         out=lambda wildcards, output: output[0][:-5],
         shapeit2=config["imputation"]["shapeit2"],
-    threads: 40
+    threads: 20
     shell:
         """
         {SHAPEIT2} {params.shapeit2} -B {params.bfile} -R {input.hap} {input.leg} {input.sam} -M {params.maps} --exclude-snp {input.excl} -O {params.out} --thread {threads} &> {log}
         """
 
 
-# rule convert_haps2vcf:
-#     input:
-#         os.path.join(OutPrephasing, OutPrefix + "_chr{chrom}.prephased.haps"),
-#     output:
-#         os.path.join(OutPrephasing, OutPrefix + "_chr{chrom}.prephased.vcf.gz"),
-#     params:
-#         out=os.path.join(OutPrephasing, OutPrefix + "_chr{chrom}.prephased"),
-#     shell:
-#         """
-#         {SHAPEIT2} -convert --input-haps {params.out} --output-vcf {params.out}.vcf.gz && \
-#         gzip -dc {params.out}.vcf.gz | bgzip -c >{params.out}.t.vcf.gz && mv {params.out}.t.vcf.gz {params.out}.vcf.gz && \
-#         tabix -f {params.out}.vcf.gz && echo done
-#         """
+def get_imputed_chunks(wildcards):
+    """get all imputed results for chunks of 5M regions"""
+    chrom = f"{wildcards.chrom}"
+    gens = expand(
+        str(rules.run_imputation_byregion.output.gen),
+        region=get_chunks_list(chrom),
+        allow_missing=True,
+    )
+    info = [f"{gen}_info" for gen in gens]
+    haps = [f"{gen}_haps" for gen in gens]
+    allele_probs = [f"{gen}_allele_probs" for gen in gens]
+    return {"gen": gens, "info": info, "haps": haps, "allele_probs": allele_probs}
 
 
-# def get_imputed_chunks(wildcards):
-#     """get all imputed results for chunks of 5M regions"""
-#     chrom = f"{wildcards.chrom}"
-#     gens = expand(
-#         str(rules.run_imputation_byregion.output.gen),
-#         region=get_chunks_list(chrom),
-#         allow_missing=True,
-#     )
-#     info = [f"{gen}_info" for gen in gens]
-#     haps = [f"{gen}_haps" for gen in gens]
-#     allele_probs = [f"{gen}_allele_probs" for gen in gens]
-#     return {"gen": gens, "info": info, "haps": haps, "allele_probs": allele_probs}
+rule run_impute2_byregion:
+    input:
+        haps=rules.run_prephasing.output.haps,
+        hap1=rules.prepare_ref1.output.hap,
+        leg1=rules.prepare_ref1.output.leg,
+        hap2=rules.prepare_ref2.output.hap,
+        leg2=rules.prepare_ref2.output.leg,
+    output:
+        gen=temp(os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}")),
+        info=temp(os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}_info")),
+        haps=temp(os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}_haps")),
+        summary=temp(
+            os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}_summary")
+        ),
+        probs=temp(
+            os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}_allele_probs")
+        ),
+        info2=temp(
+            os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}_info_by_sample")
+        ),
+    log:
+        os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}.llog"),
+    params:
+        maps=lambda wildcards: REFPANEL[wildcards.chrom]["geneticmap"],
+        impute2=config["imputation"]["impute2"],
+    benchmark:
+        os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}.benchmark.txt")
+    threads: 1
+    shell:
+        """
+        {IMPUTE2} {params.impute2} -phase -use_prephased_g -known_haps_g {input.haps} -merge_ref_panels -merge_ref_panels_output_ref {output.gen}_merged_ref -h {input.hap1} {input.hap2} -l {input.leg1} {input.leg2} -m {params.maps} -int {wildcards.start} {wildcards.end} -o {output.gen}
+        grep "no SNPs in the imputation interval" {output.summary} && touch {output} || true
+        """
 
 
-# rule run_imputation_byregion:
-#     input:
-#         haps=os.path.join(OutPrephasing, OutPrefix + "_chr{chrom}.prephased.haps"),
-#         hap1=os.path.join(In1KGP, "chr{chrom}.forMega.hap.gz"),
-#         leg1=os.path.join(In1KGP, "chr{chrom}.forMega.legend.gz"),
-#         hap2=os.path.join(InPhasing, WgsPrefix + "_{chrom}.hap"),
-#         leg2=os.path.join(InPhasing, WgsPrefix + "_{chrom}.leg"),
-#         maps=os.path.join(MapDir, "genetic_map_hg38_chr{chrom}.txt"),
-#     output:
-#         gen=temp(os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}-{region}")),
-#         info=temp(
-#             os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}-{region}_info")
-#         ),
-#         haps=temp(
-#             os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}-{region}_haps")
-#         ),
-#         allele_probs=temp(
-#             os.path.join(
-#                 OutWithBoth, OutPrefix + ".impute2.chr{chrom}-{region}_allele_probs"
-#             )
-#         ),
-#         summary=temp(
-#             os.path.join(
-#                 OutWithBoth, OutPrefix + ".impute2.chr{chrom}-{region}_summary"
-#             )
-#         ),
-#         warning=temp(
-#             os.path.join(
-#                 OutWithBoth, OutPrefix + ".impute2.chr{chrom}-{region}_warnings"
-#             )
-#         ),
-#         infobysample=temp(
-#             os.path.join(
-#                 OutWithBoth, OutPrefix + ".impute2.chr{chrom}-{region}_info_by_sample"
-#             )
-#         ),
-#     threads: 1
-#     benchmark:
-#         os.path.join(
-#             OutWithBoth, OutPrefix + ".impute2.chr{chrom}-{region}.benchmark.txt"
-#         )
-#     run:
-#         rg = f"{wildcards.region}"
-#         ps = rg.split("-")[0]
-#         pe = rg.split("-")[1]
-#         shell(
-#             """
-#         impute2 -phase -use_prephased_g -known_haps_g {input.haps} -h {input.hap2} -l {input.leg2} -m {input.maps} -int {ps} {pe} -Ne 20000 -o {output}
-#         grep "no SNPs in the imputation interval" {output}_summary && touch {output} || true
-#         """
-#         )
-
-
-# rule concat_imputed_chunks:
-#     input:
-#         unpack(get_imputed_chunks),
-#     output:
-#         gen=protected(os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}.gz")),
-#         info=protected(
-#             os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}.info.gz")
-#         ),
-#         haps=protected(
-#             os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}.haps.gz")
-#         ),
-#         allele_probs=protected(
-#             os.path.join(
-#                 OutWithBoth, OutPrefix + ".impute2.chr{chrom}.allele_probs.gz"
-#             )
-#         ),
-#         lst=os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}.chunks.list"),
-#     run:
-#         gather = zip(input.gen, input.info, input.haps, input.allele_probs)
-#         with open(output.lst, "w") as filelist:
-#             for gen, info, haps, allele_probs in gather:
-#                 print("\t".join([gen, info, haps, allele_probs]), file=filelist)
-#         shell(
-#             """
-#         awk '{{print $1;}}' {output.lst} | xargs cat |gzip -c > {output.gen}
-#         awk '{{print $2;}}' {output.lst} | xargs cat |gzip -c > {output.info}
-#         awk '{{print $3;}}' {output.lst} | xargs cat |gzip -c > {output.haps}
-#         awk '{{print $4;}}' {output.lst} | xargs cat |gzip -c > {output.allele_probs}
-#         """
-#         )
-
-
-# rule convert_genhaps2vcf:
-#     input:
-#         haps=os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}.haps.gz"),
-#         gen=os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}.gz"),
-#         sample=os.path.join(OutPrephasing, OutPrefix + "_chr{chrom}.prephased.sample"),
-#     output:
-#         v1=os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}.unphased.vcf.gz"),
-#         v2=os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}.phased.vcf.gz"),
-#         v3=temp(
-#             os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}.phased.tmp.gz")
-#         ),
-#     params:
-#         os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}"),
-#     shell:
-#         """
-#         {PLINK} --gen {input.gen} --sample {input.sample} --hard-call-threshold 0.1 --oxford-single-chr {wildcards.chrom} --recode vcf-iid bgz --out {params}.unphased && {BCFTOOLS} index -f {output.v1}
-#         cp -f {input.sample} {params}.sample
-#         gzip -dc {input.haps} >{params}.haps && \
-#         {Shapeit} -convert --input-haps {params} --output-vcf {output.v2} && rm -f {params}.haps && \
-#         zcat {output.v2} | awk 'OFS="\t" {{if($0!~/^#/)$1={wildcards.chrom};print}}' | bgzip -c >{output.v3} && mv {output.v3} {output.v2} && \
-#         {BCFTOOLS} index -f {output.v2} && echo done
-#         """
-# rule calc_info_af:
-#     input:
-#         gen=os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}.gz"),
-#         info=os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}.info.gz"),
-#     output:
-#         os.path.join(OutWithBoth, OutPrefix + ".impute2.chr{chrom}.af.gz"),
-#     shell:
-#         """
-#         {CalcuAF} {input.gen} {input.info} {wildcards.chrom} |gzip -c > {output}
-#         """
+rule ligate_impute2_chunks:
+    input:
+        unpack(get_impute2_output_chunks),
+    output:
+        gen=protected(os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.gen.gz")),
+        info=protected(os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.info.gz")),
+        info2=protected(
+            os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.info_by_sample.gz")
+        ),
+        haps=protected(os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.haps.gz")),
+        probs=protected(
+            os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.allele_probs.gz")
+        ),
+    log:
+        os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.ligate.llog"),
+    shell:
+        """
+        ( \
+        echo {input.gen} | tr ' ' '\n'  | xargs cat |gzip -c > {output.gen} && \
+        echo {input.info} | tr ' ' '\n'  | xargs cat |gzip -c > {output.info} && \
+        echo {input.info2} | tr ' ' '\n'  | xargs cat |gzip -c > {output.info2} && \
+        echo {input.haps} | tr ' ' '\n'  | xargs cat |gzip -c > {output.haps} && \
+        echo {input.probs} | tr ' ' '\n'  | xargs cat |gzip -c > {output.probs} \
+        ) &> {log}
+        """

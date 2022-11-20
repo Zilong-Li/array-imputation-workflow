@@ -20,10 +20,10 @@ if os.path.exists(config["phasing"]["refpanel2"]):
 CHUNKSIZE = config["imputation"]["chunksize"]
 
 # programs
-BCFTOOLS = config['bcftools']
-PLINK = config['plink']
-SHAPEIT2 = config['shapeit2']
-IMPUTE2 = config['impute2']
+BCFTOOLS = config["bcftools"]
+PLINK = config["plink"]
+SHAPEIT2 = config["shapeit2"]
+IMPUTE2 = config["impute2"]
 
 
 wildcard_constraints:
@@ -31,18 +31,19 @@ wildcard_constraints:
 
 
 def get_all_results():
-    return expand(rules.run_prephasing.output, chrom=REFPANEL.keys())
+    return expand(rules.ligate_impute2_chunks.output, chrom=["chr21"])
 
 
-def get_regions_list_per_chrom(wildcards):
+# return expand(rules.run_prephasing.output, chrom=REFPANEL.keys())
+
+
+def get_regions_list_per_chrom(chrom):
     """split chr into chunks given chunksize; return starts, ends' pairs"""
     d = defaultdict(list)
     with open(config["bim"], "r") as f:
         for line in f:
             tmp = line.rstrip().split()
-            tmp[0] = tmp[0].replace("chr", "")
             d[tmp[0]].append(int(tmp[3]))
-    chrom = f"{wildcards.chrom}"
     pos = sorted(d.get(chrom))
     s, e = pos[0], pos[-1]
     n = int((e - s) / CHUNKSIZE) + 1

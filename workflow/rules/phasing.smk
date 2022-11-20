@@ -1,14 +1,14 @@
-OUTPHASING = "results/phasing"
+PHASING = "results/phasing"
 
 
 rule phasing_ref1:
     output:
-        haps=os.path.join(OUTPHASING, "refpanel1_{chrom}.haps"),
-        sample=os.path.join(OUTPHASING, "refpanel1_{chrom}.sample"),
+        haps=temp(os.path.join(PHASING, "refpanel1_{chrom}.haps")),
+        sample=temp(os.path.join(PHASING, "refpanel1_{chrom}.sample")),
     log:
-        os.path.join(OUTPHASING, "refpanel1_{chrom}.llog"),
+        os.path.join(PHASING, "refpanel1_{chrom}.llog"),
     params:
-        bfile=lambda wildcards: OUTPHASING + "/refpanel1_" + wildcards.chrom,
+        bfile=lambda wildcards: PHASING + "/refpanel1_" + wildcards.chrom,
         vcf=lambda wildcards: REFPANEL[wildcards.chrom]["vcf"],
         a1=temp(lambda wildcards: REFPANEL[wildcards.chrom]["vcf"] + ".txt"),
         maps=lambda wildcards: REFPANEL[wildcards.chrom]["geneticmap"],
@@ -17,12 +17,12 @@ rule phasing_ref1:
         intype=config["phasing"]["input"],
         shapeit2=config["phasing"]["shapeit2"],
         out=lambda wildcards, output: output[0][:-5],
-    threads: 40
+    threads: 20
     shell:
         """
         (
         if [ {params.phased} == "yes" ];then \
-            bcftools convert --hapsample {input} {output} \
+            bcftools convert --hapsample {output.haps},{output.sample} {params.vcf} \
         ; else \
             {BCFTOOLS} query -f '%CHROM\\t%POS\\t%ID\\t%REF\\t%ALT\\n' {params.vcf} > {params.a1} && \
             {PLINK} --{params.intype} {params.vcf} --a1-allele {params.a1} 4 3 \# --make-bed --out {params.bfile} && \
@@ -38,11 +38,11 @@ rule prepare_ref1:
         haps=rules.phasing_ref1.output.haps,
         sample=rules.phasing_ref1.output.sample,
     output:
-        hap=os.path.join(OUTPHASING, "refpanel1_{chrom}.hap"),
-        leg=os.path.join(OUTPHASING, "refpanel1_{chrom}.leg"),
-        sam=os.path.join(OUTPHASING, "refpanel1_{chrom}.sam"),
+        hap=os.path.join(PHASING, "refpanel1_{chrom}.hap"),
+        leg=os.path.join(PHASING, "refpanel1_{chrom}.leg"),
+        sam=os.path.join(PHASING, "refpanel1_{chrom}.sam"),
     log:
-        os.path.join(OUTPHASING, "refpanel1_{chrom}.llog"),
+        os.path.join(PHASING, "refpanel1_{chrom}.llog"),
     params:
         haps=lambda wildcards, input: input[0][:-5],
     shell:
@@ -53,10 +53,10 @@ rule prepare_ref1:
 
 rule phasing_ref2:
     output:
-        haps=os.path.join(OUTPHASING, "refpanel2_{chrom}.haps"),
-        sample=os.path.join(OUTPHASING, "refpanel2_{chrom}.sample"),
+        haps=temp(os.path.join(PHASING, "refpanel2_{chrom}.haps")),
+        sample=temp(os.path.join(PHASING, "refpanel2_{chrom}.sample")),
     params:
-        bfile=lambda wildcards: OUTPHASING + "/refpanel2_" + wildcards.chrom,
+        bfile=lambda wildcards: PHASING + "/refpanel2_" + wildcards.chrom,
         vcf=lambda wildcards: REFPANEL2[wildcards.chrom]["vcf"],
         a1=temp(lambda wildcards: REFPANEL2[wildcards.chrom]["vcf"] + ".txt"),
         maps=lambda wildcards: REFPANEL2[wildcards.chrom]["geneticmap"],
@@ -65,11 +65,11 @@ rule phasing_ref2:
         intype=config["phasing"]["input"],
         shapeit2=config["phasing"]["shapeit2"],
         out=lambda wildcards, output: output[0][:-5],
-    threads: 40
+    threads: 20
     shell:
         """
         if [ {params.phased} == "yes" ];then \
-            bcftools convert --hapsample {input} {output} \
+            bcftools convert --hapsample {output.haps},{output.sample} {params.vcf} \
         ; else \
             {BCFTOOLS} query -f '%CHROM\\t%POS\\t%ID\\t%REF\\t%ALT\\n' {params.vcf} > {params.a1} && \
             {PLINK} --{params.intype} {params.vcf} --a1-allele {params.a1} 4 3 \# --make-bed --out {params.bfile} && \
@@ -83,11 +83,11 @@ rule prepare_ref2:
         haps=rules.phasing_ref2.output.haps,
         sample=rules.phasing_ref2.output.sample,
     output:
-        hap=os.path.join(OUTPHASING, "refpanel2_{chrom}.hap"),
-        leg=os.path.join(OUTPHASING, "refpanel2_{chrom}.leg"),
-        sam=os.path.join(OUTPHASING, "refpanel2_{chrom}.sam"),
+        hap=os.path.join(PHASING, "refpanel2_{chrom}.hap"),
+        leg=os.path.join(PHASING, "refpanel2_{chrom}.leg"),
+        sam=os.path.join(PHASING, "refpanel2_{chrom}.sam"),
     log:
-        os.path.join(OUTPHASING, "refpanel2_{chrom}.llog"),
+        os.path.join(PHASING, "refpanel2_{chrom}.llog"),
     params:
         haps=lambda wildcards, input: input[0][:-5],
     shell:
