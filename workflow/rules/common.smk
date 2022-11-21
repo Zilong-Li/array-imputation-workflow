@@ -60,9 +60,9 @@ def get_imputation_results():
 
 
 def get_phasing_results():
-    res = expand(rules.phasing_ref1.output, chrom=chroms)
+    res = expand(rules.prepare_ref1.output, chrom=chroms)
     if os.path.exists(config["phasing"]["refpanel2"]):
-        res.append(expand(rules.phasing_ref2.output, chrom=chroms))
+        res.append(expand(rules.prepare_ref2.output, chrom=chroms))
     return res
 
 

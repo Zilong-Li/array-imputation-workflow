@@ -60,7 +60,7 @@ rule phasing_ref2:
         vcf=os.path.join(PHASING, "refpanel2_{chrom}.vcf.gz"),
     params:
         bfile=lambda wildcards: PHASING + "/refpanel2_" + wildcards.chrom,
-        vcf=lambda wildcards: os.path.abspath(REFPANEL[wildcards.chrom]["vcf"]),
+        vcf=lambda wildcards: os.path.abspath(REFPANEL2[wildcards.chrom]["vcf"]),
         a1=temp(lambda wildcards: REFPANEL2[wildcards.chrom]["vcf"] + ".txt"),
         maps=lambda wildcards: REFPANEL2[wildcards.chrom]["geneticmap"],
         phased=lambda wildcards: REFPANEL2[wildcards.chrom]["phased"],
