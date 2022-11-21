@@ -103,25 +103,11 @@ rule run_prephasing:
         bfile=lambda wildcards, input: input[0][:-4],
         out=lambda wildcards, output: output[0][:-5],
         shapeit2=config["imputation"]["shapeit2"],
-    threads: 20
+    threads: 40
     shell:
         """
         {SHAPEIT2} {params.shapeit2} -B {params.bfile} -R {input.hap} {input.leg} {input.sam} -M {params.maps} --exclude-snp {input.excl} -O {params.out} --thread {threads} &> {log}
         """
-
-
-def get_imputed_chunks(wildcards):
-    """get all imputed results for chunks of 5M regions"""
-    chrom = f"{wildcards.chrom}"
-    gens = expand(
-        str(rules.run_imputation_byregion.output.gen),
-        region=get_chunks_list(chrom),
-        allow_missing=True,
-    )
-    info = [f"{gen}_info" for gen in gens]
-    haps = [f"{gen}_haps" for gen in gens]
-    allele_probs = [f"{gen}_allele_probs" for gen in gens]
-    return {"gen": gens, "info": info, "haps": haps, "allele_probs": allele_probs}
 
 
 rule run_impute2_byregion:
@@ -178,7 +164,7 @@ rule ligate_impute2_chunks:
         echo {input.gen} | tr ' ' '\n'  | xargs cat | awk '$2="{wildcards.chrom}:"$3"_"$4"_"$5' | gzip -c > {output.gen} && \
         echo {input.info} | tr ' ' '\n'  | xargs cat | awk 'NR>1 && $1="{wildcards.chrom}:"$3"_"$4"_"$5;1' |gzip -c > {output.info} && \
         echo {input.info2} | tr ' ' '\n'  | xargs cat | gzip -c > {output.info2} && \
-        echo {input.haps} | tr ' ' '\n'  | xargs cat | awk '$1="{wildcards.chrom}:"$3"_"$4"_"$5 && $2="{wildcards.chrom}:"$3"_"$4"_"$5' |gzip -c > {output.haps} && \
+        echo {input.haps} | tr ' ' '\n'  | xargs cat | awk '$1="{wildcards.chrom}:"$3"_"$4"_"$5, $2="{wildcards.chrom}:"$3"_"$4"_"$5' |gzip -c > {output.haps} && \
         echo {input.probs} | tr ' ' '\n'  | xargs cat |awk '$1="{wildcards.chrom}:"$3"_"$4"_"$5' | gzip -c > {output.probs} \
         ) &> {log}
         """

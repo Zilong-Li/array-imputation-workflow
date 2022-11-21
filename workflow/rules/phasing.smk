@@ -18,7 +18,7 @@ rule phasing_ref1:
         intype=config["phasing"]["input"],
         shapeit2=config["phasing"]["shapeit2"],
         out=lambda wildcards, output: output[0][:-5],
-    threads: 20
+    threads: 40
     shell:
         """
         (
@@ -29,7 +29,9 @@ rule phasing_ref1:
             {PLINK} --{params.intype} {params.vcf} --a1-allele {params.a1} 4 3 \# --make-bed --out {params.bfile} --allow-extra-chr --output-chr chr26 && \
             if [ -s {params.fam} ];then cp {params.fam} {params.bfile}.fam;fi && \
             {SHAPEIT2} {params.shapeit2} -B {params.bfile} -M {params.maps} -O {params.out} --thread {threads} && \
-            {SHAPEIT2} -convert --input-haps {params.out}.haps --output-vcf  {output.vcf} && zcat {output.vcf} | bgzip -c > {output.vcf}.gz && mv {output.vcf}.gz {output.vcf} && {BCFTOOLS} index -f {output.vcf} \
+            awk 'NR>2 {{$1=$2; $4=0; $5=0}};1' {params.out}.sample > {params.out}.samples && \
+            awk '$1="{wildcards.chrom}:"$3"_"$4"_"$5, $2="{wildcards.chrom}:"$3"_"$4"_"$5' {params.out}.haps > {params.out}.haps.tmp && mv {params.out}.haps.tmp {params.out}.haps &&  \
+            {BCFTOOLS} convert --vcf-ids --hapsample2vcf {params.out}.haps,{params.out}.samples | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' -Oz -o {output.vcf} --threads 4 && {BCFTOOLS} index -f {output.vcf} \
         ; fi
         ) &> {log}
         """
@@ -68,9 +70,10 @@ rule phasing_ref2:
         intype=config["phasing"]["input"],
         shapeit2=config["phasing"]["shapeit2"],
         out=lambda wildcards, output: output[0][:-5],
-    threads: 20
+    threads: 40
     shell:
         """
+        (
         if [ {params.phased} == "yes" ];then \
             ln -sf {params.vcf} {output.vcf} && {BCFTOOLS} index -f {output.vcf} && {BCFTOOLS} convert --hapsample {output.haps},{output.sample} {params.vcf} \
         ; else \
@@ -78,8 +81,11 @@ rule phasing_ref2:
             {PLINK} --{params.intype} {params.vcf} --a1-allele {params.a1} 4 3 \# --make-bed --out {params.bfile} --allow-extra-chr --output-chr chr26 && \
             if [ -s {params.fam} ];then cp {params.fam} {params.bfile}.fam;fi && \
             {SHAPEIT2} {params.shapeit2} -B {params.bfile} -M {params.maps} -O {params.out} --thread {threads} && \
-            {SHAPEIT2} -convert --input-haps {params.out}.haps --output-vcf  {output.vcf} && zcat {output.vcf} | bgzip -c > {output.vcf}.gz && mv {output.vcf}.gz {output.vcf} && {BCFTOOLS} index -f {output.vcf} \
+            awk 'NR>2 {{$1=$2; $4=0; $5=0}};1' {params.out}.sample > {params.out}.samples && \
+            awk '$1="{wildcards.chrom}:"$3"_"$4"_"$5 && $2="{wildcards.chrom}:"$3"_"$4"_"$5' {params.out}.haps > {params.out}.haps.tmp && mv {params.out}.haps.tmp {params.out}.haps &&  \
+            {BCFTOOLS} convert --vcf-ids --hapsample2vcf {params.out}.haps,{params.out}.samples | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' -Oz -o {output.vcf} --threads 4 && {BCFTOOLS} index -f {output.vcf} \
         ; fi
+        ) &> {log}
         """
 
 
