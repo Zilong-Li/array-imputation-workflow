@@ -15,7 +15,7 @@ phasing:
   input: "vcf"
   shapeit2: "--duohmm -W 5"
   refpanel1: "config/refpanel1.tsv" # mandatory
-  refpanel2: "config/refpanel2.tsv" # optional,
+  refpanel2: "config/refpanel2.tsv" # optional, keep it as empty if no need
 
 imputation:
   shapeit2: "--duohmm -W 5"  # for chip prephasing
