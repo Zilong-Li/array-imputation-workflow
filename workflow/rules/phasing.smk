@@ -7,7 +7,7 @@ rule phasing_ref1:
         sample=temp(os.path.join(PHASING, "refpanel1_{chrom}.sample")),
         vcf=os.path.join(PHASING, "refpanel1_{chrom}.vcf.gz"),
     log:
-        os.path.join(PHASING, "refpanel1_{chrom}.llog"),
+        os.path.join(PHASING, "phasing_ref1_{chrom}.llog"),
     params:
         bfile=lambda wildcards: PHASING + "/refpanel1_" + wildcards.chrom,
         vcf=lambda wildcards: os.path.abspath(REFPANEL[wildcards.chrom]["vcf"]),
@@ -46,7 +46,7 @@ rule prepare_ref1:
         leg=os.path.join(PHASING, "refpanel1_{chrom}.leg"),
         sam=os.path.join(PHASING, "refpanel1_{chrom}.sam"),
     log:
-        os.path.join(PHASING, "refpanel1_{chrom}.llog"),
+        os.path.join(PHASING, "prepare_ref1_{chrom}.llog"),
     params:
         haps=lambda wildcards, input: input[0][:-5],
     shell:
@@ -60,6 +60,8 @@ rule phasing_ref2:
         haps=temp(os.path.join(PHASING, "refpanel2_{chrom}.haps")),
         sample=temp(os.path.join(PHASING, "refpanel2_{chrom}.sample")),
         vcf=os.path.join(PHASING, "refpanel2_{chrom}.vcf.gz"),
+    log:
+        os.path.join(PHASING, "phasing_ref2_{chrom}.llog"),
     params:
         bfile=lambda wildcards: PHASING + "/refpanel2_" + wildcards.chrom,
         vcf=lambda wildcards: os.path.abspath(REFPANEL2[wildcards.chrom]["vcf"]),
@@ -98,7 +100,7 @@ rule prepare_ref2:
         leg=os.path.join(PHASING, "refpanel2_{chrom}.leg"),
         sam=os.path.join(PHASING, "refpanel2_{chrom}.sam"),
     log:
-        os.path.join(PHASING, "refpanel2_{chrom}.llog"),
+        os.path.join(PHASING, "prepare_ref2_{chrom}.llog"),
     params:
         haps=lambda wildcards, input: input[0][:-5],
     shell:
