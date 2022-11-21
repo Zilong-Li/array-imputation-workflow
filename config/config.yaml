@@ -1,4 +1,7 @@
 
+# all, phasing, imputation, merge
+scenario: "all"
+
 # plink files
 # bed: prefix/path/to/plink.bed
 bed: data/chip/megaMergedPlus.autosomes.QCedHg38.nonoverlap.bed
@@ -6,6 +9,7 @@ bed: data/chip/megaMergedPlus.autosomes.QCedHg38.nonoverlap.bed
 bim: data/chip/megaMergedPlus.autosomes.QCedHg38.nonoverlap.bim
 # fam: prefix/path/to/plink.fam
 fam: data/chip/megaMergedPlus.autosomes.QCedHg38.nonoverlap.fam
+
 
 phasing:
   input: "vcf"

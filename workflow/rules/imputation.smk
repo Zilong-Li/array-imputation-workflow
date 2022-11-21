@@ -175,23 +175,23 @@ rule ligate_impute2_chunks:
     shell:
         """
         ( \
-        echo {input.gen} | tr ' ' '\n'  | xargs cat | awk '$2={wildcards.chrom}":"$3"_"$4"_"$5' | gzip -c > {output.gen} && \
-        echo {input.info} | tr ' ' '\n'  | xargs cat | gzip -c > {output.info} && \
+        echo {input.gen} | tr ' ' '\n'  | xargs cat | awk '$2="{wildcards.chrom}:"$3"_"$4"_"$5' | gzip -c > {output.gen} && \
+        echo {input.info} | tr ' ' '\n'  | xargs cat | awk 'NR>1 && $1="{wildcards.chrom}:"$3"_"$4"_"$5;1' |gzip -c > {output.info} && \
         echo {input.info2} | tr ' ' '\n'  | xargs cat | gzip -c > {output.info2} && \
-        echo {input.haps} | tr ' ' '\n'  | xargs cat | gzip -c > {output.haps} && \
-        echo {input.probs} | tr ' ' '\n'  | xargs cat | gzip -c > {output.probs} \
+        echo {input.haps} | tr ' ' '\n'  | xargs cat | awk '$1="{wildcards.chrom}:"$3"_"$4"_"$5 && $2="{wildcards.chrom}:"$3"_"$4"_"$5' |gzip -c > {output.haps} && \
+        echo {input.probs} | tr ' ' '\n'  | xargs cat |awk '$1="{wildcards.chrom}:"$3"_"$4"_"$5' | gzip -c > {output.probs} \
         ) &> {log}
         """
 
 
-rule convert_formats:
+rule convert_impute2_formats:
     input:
         gen=rules.ligate_impute2_chunks.output.gen,
         haps=rules.ligate_impute2_chunks.output.haps,
         sample=rules.run_prephasing.output.sample,
     output:
-        vcf1=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.unphased.vcf.gz"),
-        vcf2=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.phased.vcf.gz"),
+        unphased=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.unphased.vcf.gz"),
+        phased=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.phased.vcf.gz"),
     log:
         os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.convert_formats.llog"),
     params:
@@ -200,7 +200,7 @@ rule convert_formats:
         """
         (
         awk 'NR>2 {{$1=$2; $4=0; $5=0}};1' {input.sample} > {params.samples} && \
-        {BCFTOOLS} convert -G {input.gen},{params.samples} --threads 4 -Oz -o {output.vcf1} && {BCFTOOLS} index -f {output.vcf1} && \
-        {SHAPEIT2} -convert --input-haps {input.haps} --output-vcf  {output.vcf2} && {BCFTOOLS} index -f {output.vcf2} \
+        {BCFTOOLS} convert -G {input.gen},{params.samples} | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' | dosage -i - -o {output.unphased} && {BCFTOOLS} index -f {output.unphased} && \
+        {BCFTOOLS} convert --vcf-ids --hapsample2vcf {input.haps},{params.samples} | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' -Oz -o {output.phased} --threads 4 && {BCFTOOLS} index -f {output.phased} \
         ) &> {log}
         """

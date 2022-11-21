@@ -32,12 +32,47 @@ with open(config["bim"], "r") as f:
         dpos[tmp[0]].append(int(tmp[3]))
 
 
+chroms = REFPANEL.keys()
+chroms = ["chr21"]
+
+RUN = config["scenario"]
+
+
 wildcard_constraints:
     chrom="|".join(REFPANEL.keys()),
 
 
 def get_all_results():
-    return expand(rules.convert_formats.output, chrom=REFPANEL.keys())
+    if RUN == "all":
+        return get_phasing_results(), get_imputation_results(), get_merging_results()
+    elif RUN == "phasing":
+        return get_phasing_results()
+    elif RUN == "imputation":
+        return get_imputation_results()
+    elif RUN == "merge":
+        return get_merging_results()
+    else:
+        raise (ValueError("illegal scenario provided.\n"))
+
+
+def get_imputation_results():
+    return expand(rules.convert_impute2_formats.output, chrom=chroms)
+
+
+def get_phasing_results():
+    res = expand(rules.phasing_ref1.output, chrom=chroms)
+    if os.path.exists(config["phasing"]["refpanel2"]):
+        res.append(expand(rules.phasing_ref2.output, chrom=chroms))
+    return res
+
+
+def get_merging_results():
+    res = expand(rules.merge_unphasedvcf_ref1.output, chrom=chroms)
+    res.append(expand(rules.merge_phasedvcf_ref1.output, chrom=chroms))
+    if os.path.exists(config["phasing"]["refpanel2"]):
+        res.append(expand(rules.merge_unphasedvcf_ref1_ref2.output, chrom=chroms))
+        res.append(expand(rules.merge_phasedvcf_ref1_ref2.output, chrom=chroms))
+    return res
 
 
 def get_regions_list_per_chrom(chrom):

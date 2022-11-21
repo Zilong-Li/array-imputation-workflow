@@ -25,6 +25,7 @@ configfile: "config/config.yaml"
 include: "rules/common.smk"
 include: "rules/phasing.smk"
 include: "rules/imputation.smk"
+include: "rules/merge.smk"
 
 rule all:
     input:
