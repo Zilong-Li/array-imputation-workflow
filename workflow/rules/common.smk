@@ -33,7 +33,6 @@ with open(config["bim"], "r") as f:
 
 
 chroms = REFPANEL.keys()
-chroms = ["chr21"]
 
 RUN = config["scenario"]
 
