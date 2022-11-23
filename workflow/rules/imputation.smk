@@ -177,7 +177,9 @@ rule convert_impute2_formats:
         sample=rules.run_prephasing.output.sample,
     output:
         unphased=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.unphased.vcf.gz"),
+        unphasedcsi=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.unphased.vcf.gz.csi"),
         phased=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.phased.vcf.gz"),
+        phasedcsi=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.phased.vcf.gz.csi"),
     log:
         os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.convert_formats.llog"),
     params:

@@ -7,6 +7,7 @@ rule merge_unphasedvcf_ref1:
         ref1=rules.phasing_ref1.output.vcf,
     output:
         vcf=os.path.join(MERGING, "merge_refpanel1_unphased_impute2_{chrom}.vcf.gz"),
+        csi=os.path.join(MERGING, "merge_refpanel1_unphased_impute2_{chrom}.vcf.gz.csi"),
     log:
         os.path.join(MERGING, "merge_refpanel1_unphased_impute2_{chrom}.llog"),
     threads: 4
@@ -22,6 +23,7 @@ rule merge_phasedvcf_ref1:
         ref1=rules.phasing_ref1.output.vcf,
     output:
         vcf=os.path.join(MERGING, "merge_refpanel1_phased_impute2_{chrom}.vcf.gz"),
+        csi=os.path.join(MERGING, "merge_refpanel1_phased_impute2_{chrom}.vcf.gz.csi"),
     log:
         os.path.join(MERGING, "merge_refpanel1_phased_impute2_{chrom}.llog"),
     threads: 4
@@ -37,6 +39,7 @@ rule merge_unphasedvcf_ref1_ref2:
         ref2=rules.phasing_ref2.output.vcf,
     output:
         vcf=os.path.join(MERGING, "merge_refpanel12_unphased_impute2_{chrom}.vcf.gz"),
+        csi=os.path.join(MERGING, "merge_refpanel12_unphased_impute2_{chrom}.vcf.gz.csi"),
     log:
         os.path.join(MERGING, "merge_refpanel12_unphased_impute2_{chrom}.llog"),
     threads: 4
@@ -52,6 +55,7 @@ rule merge_phasedvcf_ref1_ref2:
         ref2=rules.phasing_ref2.output.vcf,
     output:
         vcf=os.path.join(MERGING, "merge_refpanel12_phased_impute2_{chrom}.vcf.gz"),
+        csi=os.path.join(MERGING, "merge_refpanel12_phased_impute2_{chrom}.vcf.gz.csi"),
     log:
         os.path.join(MERGING, "merge_refpanel12_phased_impute2_{chrom}.llog"),
     threads: 4

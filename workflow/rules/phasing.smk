@@ -6,6 +6,7 @@ rule phasing_ref1:
         haps=temp(os.path.join(PHASING, "refpanel1_{chrom}.haps")),
         sample=temp(os.path.join(PHASING, "refpanel1_{chrom}.sample")),
         vcf=os.path.join(PHASING, "refpanel1_{chrom}.vcf.gz"),
+        csi=os.path.join(PHASING, "refpanel1_{chrom}.vcf.gz.csi"),
     log:
         os.path.join(PHASING, "phasing_ref1_{chrom}.llog"),
     params:
@@ -60,6 +61,7 @@ rule phasing_ref2:
         haps=temp(os.path.join(PHASING, "refpanel2_{chrom}.haps")),
         sample=temp(os.path.join(PHASING, "refpanel2_{chrom}.sample")),
         vcf=os.path.join(PHASING, "refpanel2_{chrom}.vcf.gz"),
+        csi=os.path.join(PHASING, "refpanel2_{chrom}.vcf.gz.csi"),
     log:
         os.path.join(PHASING, "phasing_ref2_{chrom}.llog"),
     params:
