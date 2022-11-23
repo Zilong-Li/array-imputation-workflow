@@ -14,5 +14,6 @@ Make sure you have all dependencies solved. Also, make sure all data are using t
 - [bcftools](http://www.htslib.org/download/)
 - [plink](https://www.cog-genomics.org/plink/1.9/)(1.9)
 - [dosage](https://github.com/Zilong-Li/vcfpp/blob/main/tools/dosage.cpp)
+- [increaseDupPos](https://github.com/Zilong-Li/vcfpp/blob/main/tools/increaseDupPos.cpp)
 - pandas (python)
 - awk (linux)

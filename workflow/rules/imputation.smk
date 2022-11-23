@@ -186,7 +186,7 @@ rule convert_impute2_formats:
         """
         (
         awk 'NR>2 {{$1=$2; $4=0; $5=0}};1' {input.sample} > {params.samples} && \
-        {BCFTOOLS} convert -G {input.gen},{params.samples} | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' | dosage -i - -o {output.unphased} && {BCFTOOLS} index -f {output.unphased} && \
-        {BCFTOOLS} convert --vcf-ids --hapsample2vcf {input.haps},{params.samples} | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' -Oz -o {output.phased} --threads 4 && {BCFTOOLS} index -f {output.phased} \
+        {BCFTOOLS} convert -G {input.gen},{params.samples} | dosage -i - | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' | increaseDupPos -i - -o {output.unphased} && {BCFTOOLS} index -f {output.unphased} && \
+        {BCFTOOLS} convert --vcf-ids --hapsample2vcf {input.haps},{params.samples} | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' | increaseDupPos -i - -o {output.phased} && {BCFTOOLS} index -f {output.phased} \
         ) &> {log}
         """
