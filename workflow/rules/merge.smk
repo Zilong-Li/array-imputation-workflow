@@ -13,7 +13,7 @@ rule merge_unphasedvcf_ref1:
     threads: 4
     shell:
         """
-        {BCFTOOLS} merge {input.vcf} {input.ref1} | {BCFTOOLS} annotate -x INFO --set-id '%CHROM:%POS:%REF:%FIRST_ALT' --threads {threads} -Oz -o {output.vcf} && {BCFTOOLS} index -f {output.vcf}
+        {BCFTOOLS} merge {input.vcf} {input.ref1} --threads {threads} -Oz -o {output.vcf} && {BCFTOOLS} index -f {output.vcf}
         """
 
 
@@ -29,7 +29,7 @@ rule merge_phasedvcf_ref1:
     threads: 4
     shell:
         """
-        {BCFTOOLS} merge {input.vcf} {input.ref1} | {BCFTOOLS} annotate -x INFO --set-id '%CHROM:%POS:%REF:%FIRST_ALT' --threads {threads} -Oz -o {output.vcf} && {BCFTOOLS} index -f {output.vcf}
+        {BCFTOOLS} merge {input.vcf} {input.ref1}  --threads {threads} -Oz -o {output.vcf} && {BCFTOOLS} index -f {output.vcf}
         """
 
 rule merge_unphasedvcf_ref1_ref2:
@@ -45,7 +45,7 @@ rule merge_unphasedvcf_ref1_ref2:
     threads: 4
     shell:
         """
-        {BCFTOOLS} merge {input.vcf} {input.ref1} {input.ref2} | {BCFTOOLS} annotate -x INFO --set-id '%CHROM:%POS:%REF:%FIRST_ALT' --threads {threads} -Oz -o {output.vcf} && {BCFTOOLS} index -f {output.vcf}
+        {BCFTOOLS} merge {input.vcf} {input.ref1} {input.ref2}  --threads {threads} -Oz -o {output.vcf} && {BCFTOOLS} index -f {output.vcf}
         """
 
 rule merge_phasedvcf_ref1_ref2:
@@ -61,5 +61,5 @@ rule merge_phasedvcf_ref1_ref2:
     threads: 4
     shell:
         """
-        {BCFTOOLS} merge {input.vcf} {input.ref1} {input.ref2} | {BCFTOOLS} annotate -x INFO --set-id '%CHROM:%POS:%REF:%FIRST_ALT' --threads {threads} -Oz -o {output.vcf} && {BCFTOOLS} index -f {output.vcf}
+        {BCFTOOLS} merge {input.vcf} {input.ref1} {input.ref2}  --threads {threads} -Oz -o {output.vcf} && {BCFTOOLS} index -f {output.vcf}
         """
