@@ -4,41 +4,79 @@ DATANAME = os.path.basename(config["bed"])[:-4]
 
 def get_impute2_output_chunks(wildcards):
     starts, ends = get_regions_list_per_chrom(wildcards.chrom)
-    gen = expand(
-        rules.run_impute2_byregion.output.gen,
-        zip,
-        start=starts,
-        end=ends,
-        allow_missing=True,
-    )
-    info = expand(
-        rules.run_impute2_byregion.output.info,
-        zip,
-        start=starts,
-        end=ends,
-        allow_missing=True,
-    )
-    info2 = expand(
-        rules.run_impute2_byregion.output.info2,
-        zip,
-        start=starts,
-        end=ends,
-        allow_missing=True,
-    )
-    haps = expand(
-        rules.run_impute2_byregion.output.haps,
-        zip,
-        start=starts,
-        end=ends,
-        allow_missing=True,
-    )
-    probs = expand(
-        rules.run_impute2_byregion.output.probs,
-        zip,
-        start=starts,
-        end=ends,
-        allow_missing=True,
-    )
+    if config["phasing"].get("refpanel2"):
+        gen = expand(
+            rules.run_impute2_byregion_refpanel12.output.gen,
+            zip,
+            start=starts,
+            end=ends,
+            allow_missing=True,
+        )
+        info = expand(
+            rules.run_impute2_byregion_refpanel12.output.info,
+            zip,
+            start=starts,
+            end=ends,
+            allow_missing=True,
+        )
+        info2 = expand(
+            rules.run_impute2_byregion_refpanel12.output.info2,
+            zip,
+            start=starts,
+            end=ends,
+            allow_missing=True,
+        )
+        haps = expand(
+            rules.run_impute2_byregion_refpanel12.output.haps,
+            zip,
+            start=starts,
+            end=ends,
+            allow_missing=True,
+        )
+        probs = expand(
+            rules.run_impute2_byregion_refpanel12.output.probs,
+            zip,
+            start=starts,
+            end=ends,
+            allow_missing=True,
+        )
+    else:
+        gen = expand(
+            rules.run_impute2_byregion_refpanel1.output.gen,
+            zip,
+            start=starts,
+            end=ends,
+            allow_missing=True,
+        )
+        info = expand(
+            rules.run_impute2_byregion_refpanel1.output.info,
+            zip,
+            start=starts,
+            end=ends,
+            allow_missing=True,
+        )
+        info2 = expand(
+            rules.run_impute2_byregion_refpanel1.output.info2,
+            zip,
+            start=starts,
+            end=ends,
+            allow_missing=True,
+        )
+        haps = expand(
+            rules.run_impute2_byregion_refpanel1.output.haps,
+            zip,
+            start=starts,
+            end=ends,
+            allow_missing=True,
+        )
+        probs = expand(
+            rules.run_impute2_byregion_refpanel1.output.probs,
+            zip,
+            start=starts,
+            end=ends,
+            allow_missing=True,
+        )
+
     return {"gen": gen, "info": info, "info2": info2, "haps": haps, "probs": probs}
 
 
@@ -110,7 +148,42 @@ rule run_prephasing:
         """
 
 
-rule run_impute2_byregion:
+rule run_impute2_byregion_refpanel1:
+    input:
+        haps=rules.run_prephasing.output.haps,
+        hap1=rules.prepare_ref1.output.hap,
+        leg1=rules.prepare_ref1.output.leg,
+    output:
+        gen=temp(os.path.join(IMPUTATION, "impute2", "refpanel1", "{chrom}-{start}-{end}")),
+        info=temp(os.path.join(IMPUTATION, "impute2", "refpanel1", "{chrom}-{start}-{end}_info")),
+        haps=temp(os.path.join(IMPUTATION, "impute2", "refpanel1", "{chrom}-{start}-{end}_haps")),
+        summary=temp(
+            os.path.join(IMPUTATION, "impute2", "refpanel1", "{chrom}-{start}-{end}_summary")
+        ),
+        probs=temp(
+            os.path.join(IMPUTATION, "impute2", "refpanel1", "{chrom}-{start}-{end}_allele_probs")
+        ),
+        info2=temp(
+            os.path.join(IMPUTATION, "impute2", "refpanel1", "{chrom}-{start}-{end}_info_by_sample")
+        ),
+    log:
+        os.path.join(IMPUTATION, "impute2", "refpanel1", "{chrom}-{start}-{end}.llog"),
+    params:
+        maps=lambda wildcards: REFPANEL[wildcards.chrom]["geneticmap"],
+        impute2=config["imputation"]["impute2"],
+    benchmark:
+        os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}.benchmark.txt")
+    threads: 1
+    shell:
+        """
+        (
+        {IMPUTE2} {params.impute2} -phase -use_prephased_g -known_haps_g {input.haps} -h {input.hap1} -l {input.leg1} -m {params.maps} -int {wildcards.start} {wildcards.end} -o {output.gen}
+        grep "no SNPs in the imputation interval" {output.summary} && touch {output} || true
+        ) &> {log}
+        """
+
+
+rule run_impute2_byregion_refpanel12:
     input:
         haps=rules.run_prephasing.output.haps,
         hap1=rules.prepare_ref1.output.hap,
@@ -118,20 +191,20 @@ rule run_impute2_byregion:
         hap2=rules.prepare_ref2.output.hap,
         leg2=rules.prepare_ref2.output.leg,
     output:
-        gen=temp(os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}")),
-        info=temp(os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}_info")),
-        haps=temp(os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}_haps")),
+        gen=temp(os.path.join(IMPUTATION, "impute2", "refpanel12", "{chrom}-{start}-{end}")),
+        info=temp(os.path.join(IMPUTATION, "impute2", "refpanel12", "{chrom}-{start}-{end}_info")),
+        haps=temp(os.path.join(IMPUTATION, "impute2", "refpanel12", "{chrom}-{start}-{end}_haps")),
         summary=temp(
-            os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}_summary")
+            os.path.join(IMPUTATION, "impute2", "refpanel12", "{chrom}-{start}-{end}_summary")
         ),
         probs=temp(
-            os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}_allele_probs")
+            os.path.join(IMPUTATION, "impute2", "refpanel12", "{chrom}-{start}-{end}_allele_probs")
         ),
         info2=temp(
-            os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}_info_by_sample")
+            os.path.join(IMPUTATION, "impute2", "refpanel12", "{chrom}-{start}-{end}_info_by_sample")
         ),
     log:
-        os.path.join(IMPUTATION, "impute2", "{chrom}-{start}-{end}.llog"),
+        os.path.join(IMPUTATION, "impute2", "refpanel12", "{chrom}-{start}-{end}.llog"),
     params:
         maps=lambda wildcards: REFPANEL[wildcards.chrom]["geneticmap"],
         impute2=config["imputation"]["impute2"],
@@ -177,9 +250,13 @@ rule convert_impute2_formats:
         sample=rules.run_prephasing.output.sample,
     output:
         unphased=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.unphased.vcf.gz"),
-        unphasedcsi=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.unphased.vcf.gz.csi"),
+        unphasedcsi=os.path.join(
+            IMPUTATION, "impute2", "impute2.{chrom}.unphased.vcf.gz.csi"
+        ),
         phased=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.phased.vcf.gz"),
-        phasedcsi=os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.phased.vcf.gz.csi"),
+        phasedcsi=os.path.join(
+            IMPUTATION, "impute2", "impute2.{chrom}.phased.vcf.gz.csi"
+        ),
     log:
         os.path.join(IMPUTATION, "impute2", "impute2.{chrom}.convert_formats.llog"),
     params:

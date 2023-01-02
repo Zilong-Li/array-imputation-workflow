@@ -9,7 +9,7 @@ REFPANEL = (
     .to_dict(orient="index")
 )
 
-if os.path.exists(config["phasing"]["refpanel2"]):
+if config["phasing"].get("refpanel2"):
     REFPANEL2 = (
         pd.read_csv(config["phasing"]["refpanel2"], sep="\t", dtype=str)
         .set_index("chr")
@@ -60,7 +60,7 @@ def get_imputation_results():
 
 def get_phasing_results():
     res = expand(rules.prepare_ref1.output, chrom=chroms)
-    if os.path.exists(config["phasing"]["refpanel2"]):
+    if config["phasing"].get("refpanel2"):
         res.append(expand(rules.prepare_ref2.output, chrom=chroms))
     return res
 
@@ -68,7 +68,7 @@ def get_phasing_results():
 def get_merging_results():
     res = expand(rules.merge_unphasedvcf_ref1.output, chrom=chroms)
     res.append(expand(rules.merge_phasedvcf_ref1.output, chrom=chroms))
-    if os.path.exists(config["phasing"]["refpanel2"]):
+    if config["phasing"].get("refpanel2"):
         res.append(expand(rules.merge_unphasedvcf_ref1_ref2.output, chrom=chroms))
         res.append(expand(rules.merge_phasedvcf_ref1_ref2.output, chrom=chroms))
     return res
