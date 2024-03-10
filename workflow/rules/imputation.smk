@@ -141,7 +141,7 @@ rule run_prephasing:
         bfile=lambda wildcards, input: input[0][:-4],
         out=lambda wildcards, output: output[0][:-5],
         shapeit2=config["imputation"]["shapeit2"],
-    threads: 40
+    threads: 20
     shell:
         """
         {SHAPEIT2} {params.shapeit2} -B {params.bfile} -R {input.hap} {input.leg} {input.sam} -M {params.maps} --exclude-snp {input.excl} -O {params.out} --thread {threads} &> {log}
@@ -214,7 +214,7 @@ rule run_impute2_byregion_refpanel12:
     shell:
         """
         (
-        {IMPUTE2} {params.impute2} -phase -use_prephased_g -known_haps_g {input.haps} -merge_ref_panels -merge_ref_panels_output_ref {output.gen}_merged_ref -h {input.hap1} {input.hap2} -l {input.leg1} {input.leg2} -m {params.maps} -int {wildcards.start} {wildcards.end} -o {output.gen}
+        {IMPUTE2} {params.impute2} -phase -use_prephased_g -known_haps_g {input.haps} -merge_ref_panels -merge_ref_panels_output_ref {output.gen}_merged_ref -h {input.hap2} {input.hap1} -l {input.leg2} {input.leg1} -m {params.maps} -int {wildcards.start} {wildcards.end} -o {output.gen}
         grep "no SNPs in the imputation interval" {output.summary} && touch {output} || true
         ) &> {log}
         """
@@ -265,7 +265,7 @@ rule convert_impute2_formats:
         """
         (
         awk 'NR>2 {{$1=$2; $4=0; $5=0}};1' {input.sample} > {params.samples} && \
-        {BCFTOOLS} convert -G {input.gen},{params.samples} | dosage -i - | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' | increaseDupPos -i - -o {output.unphased} && {BCFTOOLS} index -f {output.unphased} && \
-        {BCFTOOLS} convert --vcf-ids --hapsample2vcf {input.haps},{params.samples} | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' | increaseDupPos -i - -o {output.phased} && {BCFTOOLS} index -f {output.phased} \
+        {BCFTOOLS} convert -G {input.gen},{params.samples} | {dosage} -i - | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' -Oz -o {output.unphased} && {BCFTOOLS} index -f {output.unphased} && \
+        {BCFTOOLS} convert --vcf-ids --hapsample2vcf {input.haps},{params.samples} | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' -Oz -o {output.phased} && {BCFTOOLS} index -f {output.phased} \
         ) &> {log}
         """

@@ -21,6 +21,8 @@ CHUNKSIZE = config["imputation"]["chunksize"]
 
 # programs
 BCFTOOLS = config["bcftools"]
+dosage = config["dosage"]
+vcfDupPos = config["vcf_dupPos"]
 PLINK = config["plink"]
 SHAPEIT2 = config["shapeit2"]
 IMPUTE2 = config["impute2"]

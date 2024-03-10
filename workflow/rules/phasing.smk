@@ -19,7 +19,7 @@ rule phasing_ref1:
         intype=config["phasing"]["input"],
         shapeit2=config["phasing"]["shapeit2"],
         out=lambda wildcards, output: output[0][:-5],
-    threads: 40
+    threads: 20
     shell:
         """
         (
@@ -32,7 +32,7 @@ rule phasing_ref1:
             {SHAPEIT2} {params.shapeit2} -B {params.bfile} -M {params.maps} -O {params.out} --thread {threads} && \
             awk 'NR>2 {{$1=$2; $4=0; $5=0}};1' {params.out}.sample > {params.out}.samples && \
             awk '$1="{wildcards.chrom}:"$3"_"$4"_"$5, $2="{wildcards.chrom}:"$3"_"$4"_"$5' {params.out}.haps > {params.out}.haps.tmp && mv {params.out}.haps.tmp {params.out}.haps &&  \
-            {BCFTOOLS} convert --vcf-ids --hapsample2vcf {params.out}.haps,{params.out}.samples | dosage -i - | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' -Oz -o {output.vcf} --threads 4 && {BCFTOOLS} index -f {output.vcf} \
+            {BCFTOOLS} convert --vcf-ids --hapsample2vcf {params.out}.haps,{params.out}.samples | {dosage} -i - | {BCFTOOLS} annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' -Oz -o {output.vcf} --threads 4 && {BCFTOOLS} index -f {output.vcf} \
         ; fi
         ) &> {log}
         """
@@ -74,7 +74,7 @@ rule phasing_ref2:
         intype=config["phasing"]["input"],
         shapeit2=config["phasing"]["shapeit2"],
         out=lambda wildcards, output: output[0][:-5],
-    threads: 40
+    threads: 20
     shell:
         """
         (
