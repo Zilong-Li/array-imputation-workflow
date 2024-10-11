@@ -22,6 +22,10 @@ imputation:
   impute2: "-Ne 20000"
   chunksize: 5000000
 
+
+# if true, do impute2 -merge_ref_panels ref1 ref2 in order
+ref1_first: false 
+
 # programs path
 impute2: "impute2"
 shapeit2: "shapeit2"

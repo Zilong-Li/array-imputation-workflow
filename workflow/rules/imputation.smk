@@ -214,7 +214,11 @@ rule run_impute2_byregion_refpanel12:
     shell:
         """
         (
-        {IMPUTE2} {params.impute2} -phase -use_prephased_g -known_haps_g {input.haps} -merge_ref_panels -merge_ref_panels_output_ref {output.gen}_merged_ref -h {input.hap2} {input.hap1} -l {input.leg2} {input.leg1} -m {params.maps} -int {wildcards.start} {wildcards.end} -o {output.gen}
+        if [ {ref1_first} == 1 ];then \
+        {IMPUTE2} {params.impute2} -phase -use_prephased_g -known_haps_g {input.haps} -merge_ref_panels -merge_ref_panels_output_ref {output.gen}_merged_ref -h {input.hap1} {input.hap2} -l {input.leg1} {input.leg2} -m {params.maps} -int {wildcards.start} {wildcards.end} -o {output.gen} \
+        ; else \
+        {IMPUTE2} {params.impute2} -phase -use_prephased_g -known_haps_g {input.haps} -merge_ref_panels -merge_ref_panels_output_ref {output.gen}_merged_ref -h {input.hap2} {input.hap1} -l {input.leg2} {input.leg1} -m {params.maps} -int {wildcards.start} {wildcards.end} -o {output.gen} \
+        ; fi \
         grep "no SNPs in the imputation interval" {output.summary} && touch {output} || true
         ) &> {log}
         """

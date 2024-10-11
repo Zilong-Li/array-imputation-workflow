@@ -1,4 +1,4 @@
-# Snakemake Imputation Workflow For Chip Array Data
+# Imputation Workflow For Chip Array Data
 
 [![Snakemake](https://img.shields.io/badge/snakemake-≥6.3.0-brightgreen.svg)](https://snakemake.github.io)
 
